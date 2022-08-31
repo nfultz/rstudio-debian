@@ -1,0 +1,11 @@
+Package: rstudio
+Version: 2022.07.1+554-1
+Architecture: amd64
+Maintainer: nfultz <nfultz@unknown>
+Installed-Size: 1398502
+Depends: libboost-chrono1.74.0 (>= 1.74.0), libboost-filesystem1.74.0 (>= 1.74.0), libboost-iostreams1.74.0 (>= 1.74.0), libboost-program-options1.74.0 (>= 1.74.0), libboost-regex1.74.0-icu71, libboost-thread1.74.0 (>= 1.74.0), libc6 (>= 2.34), libgcc-s1 (>= 4.2), libpam0g (>= 0.99.7.1), libpq5 (>= 9.2~beta3), libsqlite3-0 (>= 3.5.9), libssl3 (>= 3.0.0), libstdc++6 (>= 11), libuuid1 (>= 2.16), libyaml-cpp0.7 (>= 0.7.0), zlib1g (>= 1:1.1.4)
+Section: unknown
+Priority: optional
+Homepage: <insert the upstream URL, if relevant>
+Description: <insert up to 60 chars description>
+ <Insert long description, indented with spaces.>

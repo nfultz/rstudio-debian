@@ -1,0 +1,298 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ rstudio (2022.07.1+554-1) UNRELEASED; urgency=medium
+ .
+   * Initial release. (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+Author: nfultz <nfultz@unknown>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: 2022-08-30
+
+--- rstudio-2022.07.1+554.orig/src/cpp/CMakeLists.txt
++++ rstudio-2022.07.1+554/src/cpp/CMakeLists.txt
+@@ -218,11 +218,11 @@ else()
+    find_package(yaml-cpp REQUIRED)
+ endif()
+ 
+-if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+-   message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
+-endif()
+-
+-include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
++#if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
++#   message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
++#endif()
++#
++#include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+ 
+ # determine whether we should statically link boost. we always do this
+ # unless we are building a non-packaged build on linux (in which case
+@@ -461,7 +461,7 @@ endif()
+ if(UNIX)
+    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+    if(NOT APPLE AND RSTUDIO_USE_SYSTEM_SOCI)
+-      set(SOCI_LIBRARY_DIR "/usr/lib")
++      set(SOCI_LIBRARY_DIR "/usr/lib/x86_64-linux-gnu/")
+    endif()
+    find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+    find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+--- rstudio-2022.07.1+554.orig/src/cpp/session/CMakeLists.txt
++++ rstudio-2022.07.1+554/src/cpp/session/CMakeLists.txt
+@@ -34,13 +34,13 @@ else()
+    if(EXISTS "${RSTUDIO_TOOLS_ROOT}/dictionaries")
+       set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_TOOLS_ROOT}/dictionaries")
+    else()
+-      set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/dictionaries")
++      set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "/usr/share/dict/")
+    endif()
+    
+    if(EXISTS "${RSTUDIO_TOOLS_ROOT}/mathjax-27")
+       set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_TOOLS_ROOT}/mathjax-27")
+    else()
+-      set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_DEPENDENCIES_DIR}/mathjax-27")
++      set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "/usr/share/javascript/mathjax/")
+    endif()
+ 
+    if(EXISTS "${RSTUDIO_TOOLS_ROOT}/quarto")
+@@ -60,7 +60,7 @@ if(QUARTO_ENABLED)
+ elseif(EXISTS "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+    set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+ else()
+-   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_DIR}/pandoc/${PANDOC_VERSION}")
++   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "/usr/bin")
+ endif()
+ 
+ 
+--- rstudio-2022.07.1+554.orig/src/cpp/session/modules/SessionPath.cpp
++++ rstudio-2022.07.1+554/src/cpp/session/modules/SessionPath.cpp
+@@ -20,7 +20,7 @@
+ 
+ #include <boost/bind/bind.hpp>
+ #include <boost/regex.hpp>
+-#include <boost/system/errc.hpp>
++#include <boost/system/error_code.hpp>
+ 
+ #include <shared_core/Error.hpp>
+ #include <shared_core/FilePath.hpp>
+@@ -40,7 +40,7 @@ using namespace boost::placeholders;
+ 
+ namespace rstudio {
+ namespace session {
+-namespace modules { 
++namespace modules {
+ namespace path {
+ 
+ #ifdef __APPLE__
+@@ -55,15 +55,15 @@ bool containsPathEntry(
+    for (const std::string& item : { entry, entry + "/" })
+       if (core::algorithm::contains(pathEntries, item))
+          return true;
+-   
++
+    return false;
+-   
++
+ }
+ 
+ std::string initializePathViaEtcPaths()
+ {
+    std::vector<std::string> pathEntries;
+-   
++
+    // read /etc/paths
+    FilePath etcPaths("/etc/paths");
+    if (etcPaths.exists())
+@@ -72,7 +72,7 @@ std::string initializePathViaEtcPaths()
+       if (error)
+          LOG_ERROR(error);
+    }
+-   
++
+    // read /etc/paths.d/* entries
+    FilePath etcPathsD("/etc/paths.d");
+    if (etcPathsD.isDirectory())
+@@ -81,7 +81,7 @@ std::string initializePathViaEtcPaths()
+       Error error = etcPathsD.getChildren(children);
+       if (error)
+          LOG_ERROR(error);
+-      
++
+       for (const FilePath& child : children)
+       {
+          Error error = core::readLinesFromFile(child, &pathEntries);
+@@ -89,7 +89,7 @@ std::string initializePathViaEtcPaths()
+             LOG_ERROR(error);
+       }
+    }
+-   
++
+    return core::algorithm::join(pathEntries, ":");
+ }
+ 
+@@ -99,22 +99,22 @@ Error initializePathViaShell(const std::
+    // double-check that the requested shell exists
+    if (!FilePath(shellPath).exists())
+       return fileNotFoundError(shellPath, ERROR_LOCATION);
+-   
++
+    std::vector<std::string> args = { "-l", "-c", "printf \"%s\" \"$PATH\"" };
+-   
++
+    // try running it to see what the default PATH looks like
+    core::system::ProcessOptions options;
+-   
++
+    // don't inherit the PATH from this process
+    core::system::Options environment;
+    core::system::environment(&environment);
+    core::system::unsetenv(&environment, "PATH");
+    options.environment = environment;
+-   
++
+    // run the program
+    core::system::ProcessResult result;
+    Error error = core::system::runProgram(shellPath, args, options, &result);
+-   
++
+    if (error)
+    {
+       return error;
+@@ -140,13 +140,13 @@ Error initializePathViaShell(const std::
+                   result.stdErr,
+                   ERROR_LOCATION);
+       }
+-      
++
+       // extract last line of output
+       std::string path = lines[n - 1];
+       pPath->assign(path);
+       return Success();
+    }
+-}   
++}
+ 
+ // this routine is a little awkward -- if RStudio was launched from a terminal,
+ // it's possible that the PATH is already set as appropriate for any program
+@@ -163,13 +163,13 @@ std::string initializePath()
+    boost::regex reUsrLocalbin("(^|:)/usr/local/bin/?(:|$)");
+    if (boost::regex_search(defaultPath, reUsrLocalbin))
+       return defaultPath;
+-   
++
+    // first, try to initialize with user's default shell
+    // (RSTUDIO_SESSION_SHELL is primarily for internal use)
+    std::string shell = core::system::getenv("RSTUDIO_SESSION_SHELL");
+    if (shell.empty())
+       shell = core::system::getenv("SHELL");
+-   
++
+    if (!shell.empty())
+    {
+       std::string path;
+@@ -177,7 +177,7 @@ std::string initializePath()
+       if (!error)
+          return path;
+    }
+-   
++
+    // next, try to initialize with default shell
+    // this fallback may be necessary if the above attempt to
+    // initialize failed; e.g. because an invalid shell was selected
+@@ -188,7 +188,7 @@ std::string initializePath()
+       if (!error)
+          return path;
+    }
+-   
++
+    // all else fails, use the current application path
+    return initializePathViaEtcPaths();
+ }
+@@ -207,37 +207,37 @@ std::string homePath(const std::string&
+ 
+ Error initialize()
+ {
+-   
++
+ #ifdef __APPLE__
+    std::string path = initializePath();
+-   
++
+    // split into parts
+    std::vector<std::string> pathEntries = core::algorithm::split(path, ":");
+-   
++
+    // check for some components that we might need to append to the path
+    std::vector<std::string> extraEntries = {
+       homePath("Applications/quarto/bin"),
+       "/Library/TeX/texbin",
+       "/usr/texbin",
+    };
+-   
++
+    for (const std::string& entry : extraEntries)
+       if (!containsPathEntry(pathEntries, entry))
+          pathEntries.push_back(entry);
+-   
++
+    // remove empty entries
+    core::algorithm::expel_if(pathEntries, [](const std::string& entry)
+    {
+       return entry.empty();
+    });
+-   
++
+    // set the path
+    core::system::setenv("PATH", core::algorithm::join(pathEntries, ":"));
+ #endif
+ 
+    return Success();
+ }
+-   
++
+ } // namespace path
+ } // namespace modules
+ } // namespace session
+--- rstudio-2022.07.1+554.orig/src/node/CMakeNodeTools.txt
++++ rstudio-2022.07.1+554/src/node/CMakeNodeTools.txt
+@@ -42,23 +42,15 @@ else()
+    # Detect node.js, npm, and npx; use versions supplied by the dependency scripts
+    find_program(NODEJS
+       NAMES node
+-      NO_DEFAULT_PATH PATH_SUFFIXES "bin"
+-      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
++      )
+ 
+    find_program(NPM
+       NAMES npm
+-      PATH_SUFFIXES "bin"
+-      NO_DEFAULT_PATH 
+-      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
++      )
+ 
+    find_program(NPX
+       NAMES npx
+-      PATH_SUFFIXES "bin"
+-      NO_DEFAULT_PATH 
+-      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+-      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
++      )
+ 
+ endif()
+    
